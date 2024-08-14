@@ -1,5 +1,6 @@
 import { parse } from "jsr:@std/csv";
-import { marshalWeatherData } from "../server-helpers.ts";
+import { connect, insertWeatherData, marshalWeatherData } from "../server-helpers.ts";
+import { createWeatherTable } from "../server-helpers.ts";
 
 export default () => {
     downloadAndProcess().catch(console.error);
@@ -22,7 +23,7 @@ const processLine = (line: string) => {
 
     const marshalled = marshalWeatherData(data[0]);
 
-    console.log({ line, data, marshalled });
+    insertWeatherData(connect(), marshalled);
 };
 
 const downloadAndProcess = async () => {

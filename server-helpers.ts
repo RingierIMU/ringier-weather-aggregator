@@ -1,3 +1,6 @@
+import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
+import { Eta } from "https://deno.land/x/eta@v3.0.3/src/index.ts"
+
 export type RouteMatch = {
     matched: boolean;
     params: Record<string, string>;
@@ -71,4 +74,90 @@ export const marshalWeatherData = (data: Record<string, string>): WeatherData =>
         windGust: String(data.wind_gust),
         weatherDescription: String(data.weather_description),
     };
+};
+
+export const connect = () => {
+    return new DB("weather.db");
+};
+
+export const createWeatherTable = (db: DB) => {
+    db.execute(`
+        CREATE TABLE IF NOT EXISTS weather (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            city TEXT NOT NULL,
+            latitude TEXT NOT NULL,
+            longitude TEXT NOT NULL,
+            temperature REAL NOT NULL,
+            visibility TEXT,
+            dewPoint REAL NOT NULL,
+            feelsLike REAL NOT NULL,
+            minimumTemperature REAL NOT NULL,
+            maximumTemperature REAL NOT NULL,
+            pressure TEXT NOT NULL,
+            seaLevel TEXT,
+            groundLevel TEXT,
+            humidity INTEGER NOT NULL,
+            windSpeed REAL NOT NULL,
+            windDirection INTEGER NOT NULL,
+            windGust TEXT,
+            weatherDescription TEXT NOT NULL
+        );
+    `);
+};
+
+export const insertWeatherData = (db: DB, weatherData: WeatherData) => {
+    createWeatherTable(db);
+
+    const checkQuery = `SELECT COUNT(*) FROM weather WHERE date = ?`;
+    const result = db.query(checkQuery, [weatherData.date.toISOString()]);
+    const [count] = result[0] as number[];
+
+    if (count > 0) {
+        // console.log(`Data for date ${weatherData.date.toISOString()} already exists.`);
+        return;
+    }
+
+    const query = `
+      INSERT INTO weather (
+        date, city, latitude, longitude, temperature, visibility, dewPoint,
+        feelsLike, minimumTemperature, maximumTemperature, pressure, seaLevel,
+        groundLevel, humidity, windSpeed, windDirection, windGust, weatherDescription
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [
+      weatherData.date.toISOString(),
+      weatherData.city,
+      weatherData.latitude,
+      weatherData.longitude,
+      weatherData.temperature,
+      weatherData.visibility,
+      weatherData.dewPoint,
+      weatherData.feelsLike,
+      weatherData.minimumTemperature,
+      weatherData.maximumTemperature,
+      weatherData.pressure,
+      weatherData.seaLevel,
+      weatherData.groundLevel,
+      weatherData.humidity,
+      weatherData.windSpeed,
+      weatherData.windDirection,
+      weatherData.windGust,
+      weatherData.weatherDescription
+    ]);
+};
+
+export const view = async function(name: string, data: object = {}): Promise<Response> {
+    const renderer = new Eta({
+        views: "./templates/",
+        cache: true,
+        useWith: true,
+    });
+
+    const content = await renderer.renderAsync(name, data);
+
+    return new Response(content, {
+        headers: { "Content-Type": "text/html" }
+    })
 };

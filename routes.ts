@@ -1,4 +1,5 @@
-import syncWeather from "./responders/sync-weather-responder.ts";
+import indexResponder from "./responders/index-responder.ts";
+import syncWeatherResponder from "./responders/sync-weather-responder.ts";
 
 export type Route = {
     method: string;
@@ -10,11 +11,11 @@ export const routes: Route[] = [
     {
         method: "GET",
         pattern: "/",
-        handler: () => new Response("Welcome to the homepage!", { status: 200 }),
+        handler: indexResponder,
     },
     {
         method: "GET",
         pattern: "/sync-weather",
-        handler: syncWeather,
+        handler: syncWeatherResponder,
     }
 ];

@@ -1,0 +1,90 @@
+<style>
+    svg {
+        font-family: Arial, sans-serif;
+    }
+    .axis {
+        stroke: #000;
+    }
+    .line {
+        stroke-width: 2;
+        fill: none;
+    }
+    .dot {
+        stroke: #1f77b4;
+        fill: #1f77b4;
+    }
+</style>
+<div id="chart"></div>
+<script>
+    function formatMonthYear(dateString) {
+        const [year, month] = dateString.split('-').map(Number);
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        return `${monthNames[month - 1]} ${year}`;
+    }
+
+    function aggregateData(data) {
+        const groupedData = {};
+
+        data.forEach(d => {
+            const date = new Date(d.day);
+            const key = formatMonthYear(`${date.getFullYear()}-${date.getMonth() + 1}`);
+
+            if (!groupedData[key]) {
+                groupedData[key] = { minTempSum: 0, maxTempSum: 0, count: 0 };
+            }
+            groupedData[key].minTempSum += d.minimumTemperature;
+            groupedData[key].maxTempSum += d.maximumTemperature;
+            groupedData[key].count += 1;
+        });
+
+        return Object.entries(groupedData).map(([key, value]) => ({
+            period: key,
+            avgMinTemp: value.minTempSum / value.count,
+            avgMaxTemp: value.maxTempSum / value.count
+        }));
+    }
+
+    const data = aggregateData([<%~ data %>]);
+
+    const width = 800;
+    const height = 400;
+    const barWidth = width / data.length - 14;
+    const margin = { top: 20, right: 20, bottom: 80, left: 60 };
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const maxTemp = Math.max(...data.map(d => d.avgMaxTemp));
+    const yScale = innerHeight / maxTemp;
+
+    let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+
+    const yAxisStep = 3;
+
+    for (let i = 0; i <= maxTemp; i += yAxisStep) {
+        const y = height - margin.bottom - i * yScale;
+        svgContent += `<line x1="${margin.left}" y1="${y}" x2="${width - margin.right}" y2="${y}" stroke="#ccc" stroke-width="0.5"/>`;
+        svgContent += `<text x="${margin.left - 5}" y="${y + 4}" fill="black" font-size="12" text-anchor="end">${i}&deg;C</text>`;
+    }
+
+    data.forEach((d, index) => {
+        const x = margin.left + index * (barWidth + 10);
+        const yMax = height - margin.bottom - d.avgMaxTemp * yScale;
+        const barHeightMax = d.avgMaxTemp * yScale;
+
+        const yMin = height - margin.bottom - d.avgMinTemp * yScale;
+        const barHeightMin = d.avgMinTemp * yScale;
+
+        svgContent += `<rect x="${x}" y="${yMax}" width="${barWidth}" height="${barHeightMax}" fill="blue" />`;
+        svgContent += `<rect x="${x}" y="${yMin}" width="${barWidth}" height="${barHeightMin}" fill="lightblue" />`;
+
+        svgContent += `<text x="${x + barWidth / 2}" y="${height - margin.bottom + 40}" fill="black" font-size="12" text-anchor="middle" transform="rotate(-45 ${x + barWidth / 2},${height - margin.bottom + 40})">${d.period}</text>`;
+    });
+
+    svgContent += `<line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="black" />`;
+    svgContent += `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="black" />`;
+
+    svgContent += `<text x="${margin.left - 40}" y="${(height / 2) - 6}" fill="black" font-size="14" text-anchor="middle" transform="rotate(-90 ${margin.left - 40},${height / 2})">Temperature (&deg;C)</text>`;
+
+    svgContent += '</svg>';
+
+    document.getElementById('chart').innerHTML = svgContent;
+</script>
