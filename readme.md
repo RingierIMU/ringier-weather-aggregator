@@ -1,4 +1,4 @@
-# Ringier Silly Aggregator
+# Ringier Weather Aggregator
 
 ## Getting Started
 
