@@ -1,8 +1,27 @@
 # Ringier Weather Aggregator
 
+This is an example project created to help with technical interviews.
+
 ## Getting Started
 
-This project is a simple HTTP server with routing capabilities. Follow the instructions below to run the server and execute tests.
+Follow these steps to get a general idea of what this app is about:
+
+1. make sure you have deno installed
+1. run the server
+2. navigate to `/sync-weather`
+3. wait a bit for some data to import
+4. navigate to `/` to see the graph
+
+### Installing Deno
+
+On Mac, run:
+
+```
+brew install deno
+```
+
+For instructions installing homebrew, go to <https://brew.sh>
+For instructions installed Deno, do to <https://deno.com>
 
 ### Running the Server
 
